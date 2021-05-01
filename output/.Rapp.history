@@ -1,0 +1,60 @@
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_V2.Rdata")
+ls()
+CRPSmean_1.5
+CRPSmean_1.5[,2]>CRPSmean_1.5[,1]
+CRPSmean_2[,2]>CRPSmean_2[,1]
+CRPSmean_1[,2]>CRPSmean_1[,1]
+CRPS_0.001[,2]>CRPS_0.001[,1]
+CRPSmean_0.001[,2]>CRPSmean_0.001[,1]
+MSEmean[,2]>MSEmean[,1]
+CRPSmean_0.001[1:4,1:2]
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_2.Rdata")
+ls()
+CRPSmean
+ICLmean
+CRPSmean[,1]<CRPSmean[,2]
+ICL[,1]<ICL[,2]
+ICL[,1]>ICL[,2]
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_V2.Rdata")
+ls(())
+ls()
+RMSEmean
+RMSEmeCRPSmean_2
+CRPSmean_2
+CRPSmean_2[,1]<CRPSmean_2[,1]
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_3_V2.Rdata")
+CRPSmean_2[,1]<CRPSmean_2[,2]#
+CRPSmean_1.5[,1]<CRPSmean_1.5[,2]#
+CRPSmean_1[,1]<CRPSmean_1[,2]#
+CRPSmean_0.001[,1]<CRPSmean_0.001[,2]
+MSEmean[,1]<MSEmean[,2]
+ICL
+ICL[,1]>ICL[,2]
+rm(list=ls())
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_2.Rdata")
+ICL[,1]>ICL[,2]
+MSEmean[,1]<MSEmean[,2]
+CRPSmean_1[,1]<CRPSmean_1[,2]
+CRPSmean_2[,1]<CRPSmean_2[,2]#
+CRPSmean_1.5[,1]<CRPSmean_1.5[,2]#
+CRPSmean_1[,1]<CRPSmean_1[,2]#
+CRPSmean_0.001[,1]<CRPSmean_0.001[,2]
+MSEmean[,1]<MSEmean[,2]
+load("/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/output/CRPS_2.Rdata")
+ls()
+RMSE
+RMSEmean
+MSEmean
+MSEmean[,1]<MSEmean[,2]
+CRPSmean_2[,1]<CRPSmean_2[,2]#
+CRPSmean_1[,1]<CRPSmean_1[,2]#
+CRPSmean_0.001[,1]<CRPSmean_0.001[,2]#
+colMeans(CRPSmean_2)
+CRPSmean_
+CRPSmean_2
+CRPSmean_2
+CRPSmean_2[,1]<CRPSmean_2[,2]
+mean(CRPSmean_2[,1])<mean(CRPSmean_2[,2])
+mean(CRPSmean_2[,1])
+mean(CRPSmean_2[,2])
+CRPSmean_2
