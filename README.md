@@ -1,6 +1,6 @@
 **multiple_animals_movement_model**
 
-
+ 
 This repository contains the code to replicate the results of the paper **On the inference of RNA life cycle kinetic rates from sequencing data by latent Dirichlet Process Mixture Models**.
 
 The code is written in *R* and *Julia*. To estimate the models you have to run the *Julia* code  *ModelEstimate.jl*. Inside the script, the parameter **DIR_CODE** must be equal directory path where this repository is downloaded. A file *Rdata. is saved in the directory *output*. Notice that the code need the library *HierarchicalMultivariateAnimalMovement* that is part of this repository.
