@@ -15,13 +15,13 @@ using RCall
 
 imod = 1
 IndAn = 1:12
-rngseed = 3210
+rngseed = 310
 
 rng    	= MersenneTwister(rngseed);
 Random.seed!(rngseed)# 1234 1
 
 ##### DIRECTORIES and NAMES
-NAME 	= ["Standard", "Prop", "PropJoint"][imod]
+NAME 	= ["Standard", "Prop", "singleHDP"][imod]
 NAME    = string(NAME,"_",rngseed,"_1_1_")
 
 DIR  	= "/Users/gianlucamastrantonio/Dropbox (Politecnico di Torino Staff)/lavori/HDP_Animal/ToSumbit/codes/multiple_animals_movement_model/"
@@ -241,14 +241,13 @@ if imod == 2
 end
 
 if imod == 3
-	ModelOut  = MCMCalgorithm_joint(
+	ModelOut  = MCMCalgorithm_singleHDP(
 		MCMCout,
 		MCMCLikelihood,
 	    MCMCClusterization,
 		HierarchicalParameters,
 		rng;
-		Iter_lev2 = Int32(0)
-	)
+
 end
 
 

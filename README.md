@@ -10,8 +10,8 @@ Once the model is estimated, the plots and tables present in the paper, with the
 To obtain the table with the models comparisons, we have to estimate the three models with 10% of NA. This can be done using the code *ModelEstimateMissing.jl* and, as before, **DIR_CODE** must be set as the directory path where this repository is donwloaded. The parameter
  **imod** is used to obtain the results of the three models shown in the paper:
 
-* **imod = 1** model M1
-* **imod = 2** model M2
-* **imod = 3** model M3 (results for this model are not present in the paper)
+* **imod = 1** model M3
+* **imod = 2** model M1
+* **imod = 3** model M2
 
 Once the results for the three models are obtained, the table con be obtained with the file *Models Comparison.R*. Also in this file the parameter **DIR_CODE** must be set.
