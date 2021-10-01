@@ -12,7 +12,19 @@ function sample_zeta!(rng::MersenneTwister,Likelihood::Vector{Likelihood_OU_Circ
 end
 
 
+function sample_zeta_app!(rng::MersenneTwister,Likelihood::Vector{Likelihood_OU_CircLinmodel}, Clusterization::Vector{Clusterization_HDPHMM},doupdate::ZetaDoUpdate)
 
+    nanim = size(Likelihood)[1]
+    for ian in 1:nanim
+        sample_zeta_app!(rng,Likelihood[ian], Clusterization[ian])
+    end
+
+end
+function sample_zeta_app!(rng::MersenneTwister,Likelihood::AbstractLikelihood, Clusterization::AbstractClusterization_Divided)
+
+    sample_zeta_beam!(rng,Likelihood,Clusterization)
+
+end
 function sample_zeta!(rng::MersenneTwister,Likelihood::Vector{Likelihood_OU_CircLinmodel}, Clusterization::Vector{Clusterization_HDPHMM},doupdate::ZetaDoUpdate)
 
     nanim = size(Likelihood)[1]
@@ -24,7 +36,7 @@ end
 function sample_zeta!(rng::MersenneTwister,Likelihood::AbstractLikelihood, Clusterization::AbstractClusterization_Divided)
 
     u = rand(rng,Uniform(0.0,1.0))
-    if u<0.95
+    if u<0.80
         sample_zeta_beam!(rng,Likelihood,Clusterization)
     else
         sample_zeta_marg!(rng,Likelihood,Clusterization)
@@ -46,12 +58,26 @@ Moltbeam = Float64(1.0)
     nanim       = Likelihood.data.nanimals
     nt          = Likelihood.data.nt
 
-    zetaprex = 1
+    Clust = Clusterization.clusterization
+
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
+
+    zetaprex = zetazero
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
 
-    Clust = Clusterization.clusterization
+
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
 
@@ -59,14 +85,14 @@ Moltbeam = Float64(1.0)
 
 
     un    = zeros(Float64,nt)
-    zetaprex = 1
+    zetaprex = zetazero
     for i  in 1:(nt-1)
         @inbounds k1          = Likelihood.clusterization.zeta[i]
         @inbounds un[i]       = rand(rng,Uniform(0.0, Clusterization.pi.parameteracc[zetaprex][k1]/Moltbeam))
         @inbounds zetaprex    = k1
     end
 
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
         #print("i=",i,"\n")
         nk              = 0
@@ -110,6 +136,8 @@ Moltbeam = Float64(1.0)
     @inbounds Likelihood.clusterization.zeta[i] = veckacc[sample_discretevar(rng,sampvec)]
 
     Update_ObsInClust!(Likelihood.clusterization)
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
     return nothing
 
 end
@@ -133,6 +161,17 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::AbstractLikelihood, 
     probsVect       = zeros(Float64,kmax)
 
 
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
     # LogPdfMatrix = zeros(Float64,nt,kmax)
     # for i  in 1:(nt-1)
@@ -151,7 +190,7 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::AbstractLikelihood, 
     # end
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
 
         @inbounds zetasux        = Likelihood.clusterization.zeta[i+1]
@@ -203,6 +242,8 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::AbstractLikelihood, 
     Likelihood.clusterization.zeta[i] = sample_discretevar(rng,probsVect)
 
     Update_ObsInClust!(Likelihood.clusterization)
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
     return nothing
 
 end
@@ -235,13 +276,27 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::AbstractLikeli
     nanim       = Likelihood.data.nanimals
     nt          = Likelihood.data.nt
 
+
+
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
+
     zetaprex = 1
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
 
 
     ksamp1_app     = Int16(rand(1:Likelihood.clusterization.n_nonemptyC[1],1)[1])
@@ -479,6 +534,8 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::AbstractLikeli
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp1
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
 
     else
@@ -496,6 +553,8 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::AbstractLikeli
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp2
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
     #print(exp(MH),"\n")
@@ -526,13 +585,27 @@ function sample_zeta_mergesplit_v2!(rng::MersenneTwister,Likelihood::AbstractLik
     nanim       = Likelihood.data.nanimals
     nt          = Likelihood.data.nt
 
+
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
+
+
     zetaprex = 1
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
 
 
     ksamp1_app     = Int16(rand(1:Likelihood.clusterization.n_nonemptyC[1],1)[1])
@@ -945,6 +1018,8 @@ function sample_zeta_mergesplit_v2!(rng::MersenneTwister,Likelihood::AbstractLik
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp1
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
 
     else
@@ -962,6 +1037,8 @@ function sample_zeta_mergesplit_v2!(rng::MersenneTwister,Likelihood::AbstractLik
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp2
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
     #print(exp(MH),"\n")
@@ -1005,17 +1082,28 @@ function sample_zeta_beam!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
 
     un    = zeros(Float64,nt)
-    zetaprex = 1
+    zetaprex = zetazero
     for i  in 1:(nt-1)
         @inbounds k1          = Likelihood.clusterization.zeta[i]
         @inbounds un[i]       = rand(rng,Uniform(0.0, Clusterization.pi.parameteracc[zetaprex][k1]/Moltbeam))
         @inbounds zetaprex    = k1
     end
 
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
         nk              = 0
          @inbounds zetasux        = Likelihood.clusterization.zeta[i+1]
@@ -1059,6 +1147,8 @@ function sample_zeta_beam!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
     @inbounds Likelihood.clusterization.zeta[i] = veckacc[sample_discretevar(rng,sampvec)]
 
     Update_ObsInClust!(Likelihood.clusterization)
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
     nanim_v2 = size(Likelihood_JOINT)[1]
     #print(nanim_v2)
@@ -1069,6 +1159,8 @@ function sample_zeta_beam!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
             end
 
             Update_ObsInClust!(Likelihood_JOINT[ian].clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 
@@ -1094,6 +1186,17 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
 
     # LogPdfMatrix = zeros(Float64,nt,kmax)
@@ -1113,7 +1216,7 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
     # end
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
 
         zetasux        = Likelihood.clusterization.zeta[i+1]
@@ -1169,7 +1272,8 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
     Likelihood.clusterization.zeta[i] = sample_discretevar(rng,probsVect)
 
     Update_ObsInClust!(Likelihood.clusterization)
-
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
     if nanim_v2>1
         for ian in 2:nanim_v2
@@ -1178,6 +1282,8 @@ function sample_zeta_marg!(rng::MersenneTwister,Likelihood::Likelihood_OU_CircLi
             end
 
             Update_ObsInClust!(Likelihood_JOINT[ian].clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 
@@ -1451,17 +1557,28 @@ function sample_zeta_beam_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
 
     un    = zeros(Float64,nt)
-    zetaprex = 1
+    zetaprex = zetazero
     for i  in 1:(nt-1)
         @inbounds k1          = Likelihood.clusterization.zeta[i]
         @inbounds un[i]       = rand(rng,Uniform(0.0, Clusterization.pi.parameteracc[zetaprex][k1]/Moltbeam))
         @inbounds zetaprex    = k1
     end
 
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
         nk              = 0
          @inbounds zetasux        = Likelihood.clusterization.zeta[i+1]
@@ -1505,6 +1622,8 @@ function sample_zeta_beam_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     @inbounds Likelihood.clusterization.zeta[i] = veckacc[sample_discretevar(rng,sampvec)]
 
     Update_ObsInClust!(Likelihood.clusterization)
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
     nanim_v2 = size(Likelihood_JOINT)[1]
     #print(nanim_v2)
@@ -1514,6 +1633,8 @@ function sample_zeta_beam_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
                 Likelihood_JOINT[ian].clusterization.zeta[i] = Likelihood.clusterization.zeta[i]
             end
             Update_ObsInClust!(Likelihood_JOINT[ian].clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 
@@ -1539,6 +1660,17 @@ function sample_zeta_marg_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
 
     # LogPdfMatrix = zeros(Float64,nt,kmax)
@@ -1558,7 +1690,7 @@ function sample_zeta_marg_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     # end
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
     @inbounds for i  in 1:(nt-2)
 
         zetasux        = Likelihood.clusterization.zeta[i+1]
@@ -1614,6 +1746,8 @@ function sample_zeta_marg_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     Likelihood.clusterization.zeta[i] = sample_discretevar(rng,probsVect)
 
     Update_ObsInClust!(Likelihood.clusterization)
+    Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
 
 
     if nanim_v2>1
@@ -1622,6 +1756,8 @@ function sample_zeta_marg_type2!(rng::MersenneTwister,Likelihood::Likelihood_OU_
                 Likelihood_JOINT[ian].clusterization.zeta[i] = Likelihood.clusterization.zeta[i]
             end
             Update_ObsInClust!(Likelihood_JOINT[ian].clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 
@@ -1648,13 +1784,27 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::Likelihood_OU_
     nanim       = Likelihood.data.nanimals
     nt          = Likelihood.data.nt
 
+
+    probzetazero = zeros(Float64,kmax)
+    for k in 1:kmax
+        if Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]< 0.0000000000001
+
+            probzetazero[k] = 0.0000000000001
+        else
+            probzetazero[k] = Clusterization.pi.parameteracc[k][Likelihood.clusterization.zeta[1]]
+        end
+    end
+    zetazero = sample_discretevar(rng, log.(probzetazero))
+    Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
+
+
     zetaprex = 1
     veckacc = zeros(Int16,kmax)
     probsVect       = zeros(Float64,kmax)
 
     kappaPar = Clusterization.mcmc_ak[1]*Clusterization.mcmc_rho[1]
     alphaPar = Clusterization.mcmc_ak[1]-kappaPar
-    zetaprex = 1
+    zetaprex = zetazero
 
 
     ksamp1_app     = Int16(rand(1:Likelihood.clusterization.n_nonemptyC[1],1)[1])
@@ -1853,6 +2003,8 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::Likelihood_OU_
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp1
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
 
     else
@@ -1869,6 +2021,8 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::Likelihood_OU_
                 @inbounds Likelihood.clusterization.zeta[t] = ksamp2
             end
             Update_ObsInClust!(Likelihood.clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 
@@ -1878,6 +2032,8 @@ function sample_zeta_mergesplit!(rng::MersenneTwister,Likelihood::Likelihood_OU_
                 Likelihood_JOINT[ian].clusterization.zeta[t] = Likelihood.clusterization.zeta[t]
             end
             Update_ObsInClust!(Likelihood_JOINT[ian].clusterization)
+            Clust.n_itojC[1][Likelihood.clusterization.zeta[1]]         -= 1;
+            Clusterization.clusterization.n_itojC[zetazero][Likelihood.clusterization.zeta[1]]  += 1;
         end
     end
 

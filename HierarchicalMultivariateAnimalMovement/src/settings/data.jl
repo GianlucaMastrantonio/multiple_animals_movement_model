@@ -227,8 +227,9 @@ struct Clusterization_HDPHMM{Tpi<:AbstractVecPar,Tzeta<:AbstractZeta}   <: Abstr
     prior_rho::Vector{Float64}
     MatM::Matrix{Float64}
     MatMbar::Matrix{Float64}
+    gamma_par::Vector{Float64}
 
-    Clusterization_HDPHMM{Tpi,Tzeta}(clusterization::Tzeta,pi::Tpi,mcmc_initpi,mcmc_initz,mcmc_beta::Vector{Float64},mcmc_rho::Vector{Float64},mcmc_gamma::Vector{Float64},  mcmc_ak::Vector{Float64},prior_ak::Vector{Float64},prior_gamma::Vector{Float64},prior_rho::Vector{Float64},MatM::Matrix{Float64},MatMbar::Matrix{Float64}) where {Tpi<:AbstractVecPar,Tzeta<:AbstractZeta} = new{Tpi,Tzeta}(clusterization,pi,mcmc_initpi,mcmc_initz,mcmc_beta,mcmc_rho,mcmc_gamma,  mcmc_ak,prior_ak,prior_gamma,prior_rho,MatM,MatMbar)
+    Clusterization_HDPHMM{Tpi,Tzeta}(clusterization::Tzeta,pi::Tpi,mcmc_initpi,mcmc_initz,mcmc_beta::Vector{Float64},mcmc_rho::Vector{Float64},mcmc_gamma::Vector{Float64},  mcmc_ak::Vector{Float64},prior_ak::Vector{Float64},prior_gamma::Vector{Float64},prior_rho::Vector{Float64},MatM::Matrix{Float64},MatMbar::Matrix{Float64},gamma_par::Vector{Float64}) where {Tpi<:AbstractVecPar,Tzeta<:AbstractZeta} = new{Tpi,Tzeta}(clusterization,pi,mcmc_initpi,mcmc_initz,mcmc_beta,mcmc_rho,mcmc_gamma,  mcmc_ak,prior_ak,prior_gamma,prior_rho,MatM,MatMbar,gamma_par)
 end
 
 function Clusterization_HDPHMM(clusterization::Tzeta, pi::Tpi,mcmc_initpi::Vector{Float64},mcmc_initz::Vector{Int16},mcmc_beta::Vector{Float64},mcmc_rho::Vector{Float64},mcmc_gamma::Vector{Float64},  mcmc_ak::Vector{Float64},prior_ak::Vector{Float64},prior_gamma::Vector{Float64},prior_rho::Vector{Float64}) where {Tpi<:AbstractVecPar,Tzeta<:AbstractZeta}
@@ -237,8 +238,9 @@ function Clusterization_HDPHMM(clusterization::Tzeta, pi::Tpi,mcmc_initpi::Vecto
     #print(ktot)
     MatM        = zeros(Float64,ktot,ktot)
     MatMbar     = zeros(Float64,ktot,ktot)
+    gamma_par   = ones(Float64,5)
 
-    Clusterization_HDPHMM{Tpi,Tzeta}(clusterization,pi,mcmc_initpi,mcmc_initz,mcmc_beta,mcmc_rho,mcmc_gamma,  mcmc_ak,prior_ak,prior_gamma,prior_rho,MatM,MatMbar)
+    Clusterization_HDPHMM{Tpi,Tzeta}(clusterization,pi,mcmc_initpi,mcmc_initz,mcmc_beta,mcmc_rho,mcmc_gamma,  mcmc_ak,prior_ak,prior_gamma,prior_rho,MatM,MatMbar,gamma_par)
 end
 
 
@@ -264,7 +266,7 @@ function PosDefMatParParameter_Hierarchical(par_app::AbstractPosDefMatPar,nanim:
     kmax        = size(par_app.parameteracc)[1]
     clust       = Matrix{Int16}(undef,kmax,nanim )
     for i in 1:nanim
-        clust[:,i] = rem.((1:kmax) .-1   .+ (i-1)*20 ,kmax) .+1 
+        clust[:,i] = rem.((1:kmax) .-1   .+ (i-1)*20 ,kmax) .+1
     end
     obsinclust  = zeros(Int16,kmax,nanim)
     prob		= ones(Float64,kmax)./kmax

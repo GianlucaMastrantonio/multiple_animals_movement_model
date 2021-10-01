@@ -47,7 +47,8 @@ for saveMCMCindex in 1:MCMCout[1].nsamplesave
 		sample_zeta!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
 		sample_zeta_mergesplit!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
 		#print(rand(rng), " zeta \n")
-
+		sample_pi!(rng,MCMCClusterization, MCMCClusterization[1].pi)
+		#print(rand(rng), " pi \n")
 
 
 		### ### ### ### ### ### ###
@@ -65,8 +66,7 @@ for saveMCMCindex in 1:MCMCout[1].nsamplesave
 		#print(rand(rng), " beta \n")
 
 
-		sample_pi!(rng,MCMCClusterization, MCMCClusterization[1].pi)
-		#print(rand(rng), " pi \n")
+
 		sample_ak!(rng,MCMCClusterization, MCMCClusterization[1].pi)
 		#print(rand(rng), " ak \n")
 		sample_gamma!(rng,MCMCClusterization, MCMCClusterization[1].pi)
@@ -217,7 +217,7 @@ function MCMCalgorithm(
     MCMCClusterization::Vector{T1},
     MCMCHierarchicalParameters::OptionHierarchicalParameters,
 	rng::MersenneTwister;
-	Iter_lev2 = 0::Integer,
+	Iter_lev2 = 10::Integer,
 	Iter_print = 50::Integer
 )::Dict where {T1<:AbstractClusterization}
 
@@ -234,7 +234,7 @@ function MCMCalgorithm(
 
         for burnithinMCMCindex in 1:appBurninOrThin
 
-            if mod(iterations,Iter_print) == 0 print(string("Iterations_H=",iterations,"\n"))  end
+            if mod(iterations,Iter_print) == 0 print(string("Iterations_DHV2=",iterations,"\n"))  end
             if mod(iterations,Iter_print) == 0
                 for ian in 1:nanim
                     print(string("Clusters=",MCMCClusterization[ian].clusterization.n_nonemptyC[1],"\n"))
@@ -293,13 +293,23 @@ function MCMCalgorithm(
 			### ### ### ### ### ### ###
 
 			# zeta
-			sample_zeta!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
-			if rand(rng,Uniform(0.0,1.0))<1.1
-				#sample_zeta_mergesplit!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
-				#sample_zeta_mergesplit_v2!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization, MCMCHierarchicalParameters)
+			#sample_zeta!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
+
+			if iterations>50
+				if rand(rng,Uniform(0.0,1.0))<0.9
+					sample_zeta!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
+				else
+					sample_zeta_mergesplit!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
+				end
+			else
+				sample_zeta_app!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
 			end
 
+
+
 			sample_pi!(rng,MCMCClusterization, MCMCClusterization[1].pi)
+
+
 
             ### ### ### ### ### ### ###
 			### ### CLUSTERIZATION - Second Level
@@ -319,7 +329,7 @@ function MCMCalgorithm(
 
 			sample_ak!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
 			sample_rhodp!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
-			sample_gamma!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+			#sample_gamma!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
 
 
 
@@ -365,7 +375,7 @@ function MCMCalgorithm_joint(
 
         for burnithinMCMCindex in 1:appBurninOrThin
 
-            if mod(iterations,Iter_print) == 0 print(string("Iterations_H=",iterations,"\n"))  end
+            if mod(iterations,Iter_print) == 0 print(string("Iterations_H2=",iterations,"\n"))  end
             if mod(iterations,Iter_print) == 0
                 for ian in 1:nanim
                     print(string("Clusters=",MCMCClusterization[ian].clusterization.n_nonemptyC[1],"\n"))
@@ -428,7 +438,7 @@ function MCMCalgorithm_joint(
 			if rand(rng,Uniform(0.0,1.0))<1.1
 				sample_zeta_mergesplit!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
 			end
-
+			sample_pi_type2!(rng,MCMCClusterization, MCMCClusterization[1].pi)
             ### ### ### ### ### ### ###
 			### ### CLUSTERIZATION - Second Level
 			### ### ### ### ### ### ###
@@ -442,7 +452,7 @@ function MCMCalgorithm_joint(
 			### pi
 			compute_m_type2!(rng,MCMCClusterization, MCMCClusterization[1].pi)
 
-			sample_pi_type2!(rng,MCMCClusterization, MCMCClusterization[1].pi)
+
 
 			sample_ak_type2!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
 			sample_rhodp_type2!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
@@ -477,7 +487,7 @@ end
 #### MODEL SINGLE HDP
 #### #### #### #### #### #### ####
 
-function MCMCalgorithm_HDP(
+function MCMCalgorithm_singleHDP(
     MCMCout::Vector{MCMCutils},
     MCMCLikelihood::Vector{Likelihood_OU_CircLinmodel},
     MCMCClusterization::Vector{T1},
@@ -493,6 +503,36 @@ function MCMCalgorithm_HDP(
         MCMCout[ian].indexsave[1]    = 1
     end
 
+
+
+
+	nanim_v2    = size(MCMCLikelihood)[1]
+    nanim       = nanim_v2
+    kmax        = MCMCLikelihood[1].kmax
+
+	for ian in 1:nanim_v2
+		for k in 1:kmax
+			MCMCHierarchicalParameters.h_mu.clust[k,ian] = k
+			MCMCHierarchicalParameters.h_eta.clust[k,ian] = k
+			MCMCHierarchicalParameters.h_nu.clust[k,ian] = k
+			MCMCHierarchicalParameters.h_rho.clust[k,ian] = k
+			MCMCHierarchicalParameters.h_sigma.clust[k,ian] = k
+		end
+	end
+
+	#
+	#
+	# app = Float64(0.0)
+	# j1 = parHier.h_mu.clust[k,ian]
+	# app += log(parHier.h_mu.prob[j1])
+	# j1 = parHier.h_eta.clust[k,ian]
+	# app += log(parHier.h_eta.prob[j1])
+	# j1 = parHier.h_nu.clust[k,ian]
+	# app += log(parHier.h_nu.prob[j1])
+	# j1 = parHier.h_rho.clust[k,ian]
+	# app += log(parHier.h_rho.prob[j1])
+	# j1 = parHier.h_sigma.clust[k,ian]
+	# app += log(parHier.h_sigma.prob[j1])
 
     appBurninOrThin         = MCMCout[1].burnin
     iterations = Int64(0)
@@ -519,25 +559,25 @@ function MCMCalgorithm_HDP(
 			### missing
 	        sample_missing!(rng,MCMCLikelihood,MCMCLikelihood[1].miss)
 
-			if iterations>Iter_lev2
-
-				sample_muC_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].eta,MCMCHierarchicalParameters, MCMCClusterization)
-				#sample_muC_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].eta,MCMCHierarchicalParameters, MCMCClusterization)
-
-
-				sample_mu0_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].mu,MCMCHierarchicalParameters, MCMCClusterization)
-				#sample_mu0_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].mu,MCMCHierarchicalParameters, MCMCClusterization)
-
-				sample_rho_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].rho,MCMCHierarchicalParameters, MCMCClusterization)
-				#sample_rho_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].rho,MCMCHierarchicalParameters, MCMCClusterization)
-
-				sample_psi_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].nu,MCMCHierarchicalParameters, MCMCClusterization)
-				#sample_psi_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].nu,MCMCHierarchicalParameters, MCMCClusterization)
-
-				sample_sigma_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].sigma,MCMCHierarchicalParameters, MCMCClusterization)
-				#sample_sigma_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].sigma,MCMCHierarchicalParameters, MCMCClusterization)
-
-			end
+			# if iterations>Iter_lev2
+			#
+			# 	sample_muC_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].eta,MCMCHierarchicalParameters, MCMCClusterization)
+			# 	#sample_muC_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].eta,MCMCHierarchicalParameters, MCMCClusterization)
+			#
+			#
+			# 	sample_mu0_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].mu,MCMCHierarchicalParameters, MCMCClusterization)
+			# 	#sample_mu0_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].mu,MCMCHierarchicalParameters, MCMCClusterization)
+			#
+			# 	sample_rho_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].rho,MCMCHierarchicalParameters, MCMCClusterization)
+			# 	#sample_rho_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].rho,MCMCHierarchicalParameters, MCMCClusterization)
+			#
+			# 	sample_psi_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].nu,MCMCHierarchicalParameters, MCMCClusterization)
+			# 	#sample_psi_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].nu,MCMCHierarchicalParameters, MCMCClusterization)
+			#
+			# 	sample_sigma_lv2!(rng,MCMCLikelihood,MCMCLikelihood[1].sigma,MCMCHierarchicalParameters, MCMCClusterization)
+			# 	#sample_sigma_split_merge!(rng,MCMCLikelihood,MCMCLikelihood[1].sigma,MCMCHierarchicalParameters, MCMCClusterization)
+			#
+			# end
 
 			#eta
 			sample_muC!(rng,MCMCLikelihood,MCMCLikelihood[1].eta,MCMCHierarchicalParameters)
@@ -564,16 +604,19 @@ function MCMCalgorithm_HDP(
 				#sample_zeta_mergesplit!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization)
 				#sample_zeta_mergesplit_v2!(rng,MCMCLikelihood, MCMCClusterization,MCMCLikelihood[1].clusterization, MCMCHierarchicalParameters)
 			end
-
 			sample_pi!(rng,MCMCClusterization, MCMCClusterization[1].pi)
 
             ### ### ### ### ### ### ###
 			### ### CLUSTERIZATION - Second Level
 			### ### ### ### ### ### ###
 
-			compute_m!(rng,MCMCClusterization, MCMCClusterization[1].pi)
-			sample_prob_lv2!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
-			sample_beta!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+			#compute_m!(rng,MCMCClusterization, MCMCClusterization[1].pi)
+			#sample_prob_lv2!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+			#sample_beta!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+
+			compute_m_singleHDP!(rng,MCMCClusterization, MCMCClusterization[1].pi)
+			sample_prob_lv2_singleHDP!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+			sample_beta_singleHDP!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
 			### ### ### ### ### ### ###
 			### ### CLUSTERIZATION
 			### ### ### ### ### ### ###
@@ -585,7 +628,8 @@ function MCMCalgorithm_HDP(
 
 			sample_ak!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
 			sample_rhodp!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
-			sample_gamma!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+			#sample_gamma!(rng,MCMCClusterization, MCMCClusterization[1].pi,MCMCHierarchicalParameters)
+
 
 
 

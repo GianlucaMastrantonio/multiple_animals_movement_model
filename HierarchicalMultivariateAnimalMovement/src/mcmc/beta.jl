@@ -33,6 +33,28 @@ end
 
 
 
+function sample_beta_singleHDP!(rng::MersenneTwister,Clusterization::Vector{Clusterization_HDPHMM}, piPar::VecParDirichlet, parHier::OptionHierarchicalParameters)
+
+    #sample_beta!(Clusterization[1], Clusterization[1].pi)
+
+    kmax  = Clusterization[1].clusterization.kmax
+    nanim = size(Clusterization)[1]
+
+
+
+    for ian in 1:nanim
+
+        for k in 1:kmax
+
+            Clusterization[ian].mcmc_beta[k] = parHier.h_mu.prob[k]
+        end
+        Clusterization[ian].mcmc_beta[Clusterization[ian].mcmc_beta.<1.0e-100] .= 1.0e-100
+    end
+
+end
+
+
+
 function sample_beta_type2!(rng::MersenneTwister,Clusterization::Vector{Clusterization_HDPHMM}, piPar::VecParDirichlet, parHier::OptionHierarchicalParameters)
 
     #sample_beta!(Clusterization[1], Clusterization[1].pi)

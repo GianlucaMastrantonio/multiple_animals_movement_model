@@ -58,6 +58,7 @@ export
     OptionsMCMC,
     MCMCalgorithm,
     MCMCalgorithm_joint,
+    MCMCalgorithm_singleHDP,
     InformationalCriteria,
     MCMCutils,
     OptionHierarchicalParameters
